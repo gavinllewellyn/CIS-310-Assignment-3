@@ -7,8 +7,6 @@ and Assignment 2 (Register File, ALU) and is driven by a four-state ring-counter
 **Course:** CIS 310
 **Status:** ✅ Passes the provided test script (`test_8bit_processor.txt`)
 
-![Top-level processor](screenshots/top_level_processor.jpg)
-
 ---
 
 ## Quick Start
@@ -77,8 +75,6 @@ Each instruction is a single 8-bit word:
 
 ### Four-State FSM
 
-![ControlUnit](screenshots/control_unit.jpg)
-
 A one-hot ring counter of four D flip-flops. The rightmost flip-flop (Inst_Fetch) is initialized to `1`; all others default to `0`. On each rising clock edge the single `1` shifts one position to the left, so exactly one state signal is active at any time.
 
 | State     | Inst_Fetch | IR_ctrl | Write_Back | What Happens                                                       |
@@ -109,7 +105,6 @@ The test writes 7 instructions into memory while holding `InstrMem_ctrl = 1`:
 |    6    | SUB R1, R2  |   0x6C   | R1 ← R1 − R2                   |
 |    7    | (empty)     |   0x00   |                                |
 
-![Programming phase](screenshots/test_result_1_programming.jpg)
 
 ### Run Phase
 
@@ -118,9 +113,6 @@ After programming, 40 run cycles execute the program. Expected behavior:
 - R1: 0 → 1 → 2 → 3 → 4 → 2  *(four increments, then SUB R1, R2)*
 - R2: 0 → 1 → 2
 - R0, R3: unchanged at 0
-
-![Run phase — increments](screenshots/test_result_2_run_start.jpg)
-![Run phase — SUB and PC wrap](screenshots/test_result_3_sub_and_wrap.jpg)
 
 The trace confirms every register write occurs only during the WRITEBACK state, the `IR_ctrl` signal pulses to 1 exactly once per instruction at the start of the FETCH state, and the PC wraps from 7 back to 0 as expected.
 
