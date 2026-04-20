@@ -1,0 +1,152 @@
+# =========================================================
+# 8-bit processor test
+#
+# Signals:
+#   clk Program_Counter InstrMem_input InstrMem_ctrl
+#   IR_output IR_ctrl Write_Back ALU_output
+#
+# Instruction format:
+#   [ opcode(3) | op1(2) | op2(2) | type(1) ]
+#
+# opcode = ALU control bits = S1 S0 Cin
+#
+# ALU control / opcode meanings:
+#   000 = A + B                  (ADD)
+#   001 = A + B + 1              (ADD with carry)
+#   010 = A + B̅                 (SUB with borrow)
+#   011 = A + B̅ + 1             (SUB)
+#   100 = A                      (TRANSFER A)
+#   101 = A + 1                  (INCREMENT A)
+#   110 = A - 1                  (DECREMENT A)
+#   111 = A                      (TRANSFER A)
+#
+# Register encoding:
+#   00 = R0
+#   01 = R1
+#   10 = R2
+#   11 = R3
+#
+# Type bit:
+#   0 = R-type
+#   1 = I-type
+#
+# Notes:
+# - In R-type, op1 is A and destination, op2 selects register B.
+# - In I-type, op2 is the 2-bit immediate value.
+# - TRANSFER A should be encoded as I-type here, with op2 filled
+#   as an immediate field.
+# - Registers are assumed to start at 0.
+#
+# Program:
+#   0: INC   R1        ; R1 = 1
+#   1: INC   R1        ; R1 = 2
+#   2: ADDI  R2, 3     ; R2 = 3
+#   3: ADD   R2, R1    ; R2 = 5
+#   4: SUB   R2, R1    ; R2 = 3
+#   5: SUBB  R2, R1    ; R2 = 0
+#   6: INC   R0        ; R0 = 1
+#   7: DEC   R0        ; R0 = 0
+#   8: TRANSFER A R2   ; I-type, imm=01, R2 stays 0
+#   9: TRANSFER A R2   ; I-type, imm=10, R2 stays 0
+# =========================================================
+
+clk Program_Counter InstrMem_input InstrMem_ctrl IR_output IR_ctrl Write_Back ALU_output
+
+# ---------------------------------------------------------
+# settle
+# ---------------------------------------------------------
+#repeat(10) C X 0 0 X X X X
+
+# ---------------------------------------------------------
+# program instruction memory
+# ---------------------------------------------------------
+
+# ---------------------------------------------------------
+# addr 0 : 168 = INC R1
+#
+# 168 = 0xA8 = 10101000
+#
+# Breakdown:
+#   opcode = 101  -> Increment A
+#   op1    = 01   -> R1
+#   op2    = 00   -> immediate field present but ignored by INC
+#   type   = 0    -> R-type
+#
+# Meaning:
+#   R1 <- R1 + 1
+# ---------------------------------------------------------
+C X 168 1 X X X X
+repeat(3) C X 0 0 X X X X
+
+# ---------------------------------------------------------
+# addr 1 : 168 = INC R1
+#
+# Same instruction again
+# Meaning:
+#   R1 <- R1 + 1
+# ---------------------------------------------------------
+C X 168 1 X X X X
+repeat(3) C X 0 0 X X X X
+
+C X 168 1 X X X X
+repeat(3) C X 0 0 X X X X
+
+C X 168 1 X X X X
+repeat(3) C X 0 0 X X X X
+
+# ---------------------------------------------------------
+# addr 0 : 168 = INC R2
+#
+# 176 = 0xA8 = 10110000
+#
+# Breakdown:
+#   opcode = 101  -> Increment A
+#   op1    = 10   -> R2
+#   op2    = 00   -> immediate field present but ignored by INC
+#   type   = 0    -> R-type
+#
+# Meaning:
+#   R2 <- R2 + 1
+# ---------------------------------------------------------
+C X 176 1 X X X X
+repeat(3) C X 0 0 X X X X
+
+
+C X 176 1 X X X X
+repeat(3) C X 0 0 X X X X
+
+
+
+# ---------------------------------------------------------
+# addr 4 : 114 = SUB R1, R2
+#
+# 108 = 0x6C = 011 01 10 0
+#
+# Breakdown:
+#   opcode = 011  -> Subtract
+#   op1    = 01   -> R2
+#   op2    = 10   -> R1
+#   type   = 0    -> R-type
+#
+# Meaning:
+#   R2 <- R2 - R1
+# ---------------------------------------------------------
+C X 108 1 X X X X
+repeat(3) C X 0 0 X X X X
+
+
+
+# ---------------------------------------------------------
+# stop programming
+# ---------------------------------------------------------
+repeat(2) C X 0 0 X X X X
+
+# ---------------------------------------------------------
+# run
+# ---------------------------------------------------------
+# Expected high-level behavior:
+#   R1: 0 -> 1 -> 2
+#   R2: 0 -> 3 -> 5 -> 3 -> 0 -> 0 -> 0
+#   R0: 0 -> 1 -> 0
+# ---------------------------------------------------------
+repeat(40) C X 0 0 X X X X
